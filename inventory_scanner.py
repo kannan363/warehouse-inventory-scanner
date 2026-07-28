@@ -6,7 +6,6 @@ from datetime import datetime
 OUTPUT_CSV_FILE = "stock_status_report.csv"
 
 def select_input_file():
-    
     root = tk.Tk()
     root.withdraw()
 
@@ -41,7 +40,7 @@ def print_simulated_email(items, in_stock_count, low_count, critical_count):
     print(f"{'ITEM ID':<12}{'ITEM NAME':<40}{'CURRENT':<10}{'THRESHOLD':<12}{'STATUS':<18}{'PRIORITY'}")
     print("-" * 102)
     
-    #  (full report)
+    # (full report)
     for item in items:
         print(
             f"{item['item_id']:<12}"
@@ -72,8 +71,13 @@ def scan_inventory():
         with open(input_file, mode="r", encoding="utf-8") as csv_file:
             reader = csv.DictReader(csv_file)
             
-            for row in reader:
-                item_id = row["item_id"]
+            # Using enumerate to generate backup IDs (e.g., ITEM-001) if missing
+            for idx, row in enumerate(reader, start=1):
+                
+                item_id = row.get("item_id")
+                if not item_id:
+                    item_id = f"ITEM-{idx:03d}"  
+
                 item_name = row["item_name"]
                 current_quantity = int(row["current_quantity"])
                 reorder_threshold = int(row["reorder_threshold"])
@@ -81,7 +85,7 @@ def scan_inventory():
                 # Status & Priority Logic
                 if current_quantity > reorder_threshold:
                     status = "IN STOCK"
-                    priority = "NORMAL"
+                    priority = "GOOD"
                     in_stock_count += 1
                 else:
                     status = "RESTOCK NEEDED"
@@ -105,7 +109,7 @@ def scan_inventory():
         # 1. Output Full Simulated Email Alert to Terminal
         print_simulated_email(items, in_stock_count, low_priority_count, critical_priority_count)
 
-        # 2. Export Output to CSV File
+        # 2. Export Output to CSV File (item_id remains in output)
         fieldnames = ["item_id", "item_name", "current_quantity", "reorder_threshold", "status", "priority"]
         
         with open(OUTPUT_CSV_FILE, mode="w", newline="", encoding="utf-8") as output_csv:
